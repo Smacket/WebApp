@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { HomePage } from "./screens";
 
-const URL = "http://localhost:5000";
+//const URL = "http://localhost:5000";
 
 const App: React.FC = () => {
-  useEffect(() => {
+  /*useEffect(() => {
     fetch(URL + "/getall")
       .then(res => res.json())
       .then(
@@ -14,9 +16,9 @@ const App: React.FC = () => {
           console.log(error)
         }
       );
-  })
+  })*/
 
-  const post = () => {
+  /*const post = () => {
     const data = {name: "Awesome Book 2", author: "David", published: "2020"}
     fetch(URL + "/add", {
       headers: {
@@ -28,12 +30,15 @@ const App: React.FC = () => {
     })
       .then(res => res.json())
       .then((result) => console.log(result))
-  }
+  }*/
 
   return (
-    <div className="App">
-      <div onClick={post}>Click me</div>
-    </div>
+    <BrowserRouter>
+      <Switch>
+        <Route exact={true} path="/" component={HomePage} />
+        {/*<Route component={NotFoundPage} />*/}
+      </Switch>
+    </BrowserRouter>
   );
 }
 
