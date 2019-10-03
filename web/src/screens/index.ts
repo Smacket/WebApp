@@ -1,2 +1,5 @@
 import { HomePage } from "./HomePage";
-export { HomePage };
+import { TournamentPage } from "./TournamentPage";
+import { OrganizationPage } from "./OrganizationPage";
+import { ProfilePage } from "./ProfilePage";
+export { HomePage, TournamentPage, OrganizationPage, ProfilePage };
