@@ -3,8 +3,19 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
+import { Auth0Provider, onRedirectCallback } from "./react-auth0-wrapper";
 
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.render(
+    <Auth0Provider
+        domain={'dmgardiner.auth0.com'}
+        client_id={'nKvEjo2oZHU7sw8yNIE6ZuCzrAAXmydm'}
+        redirect_uri={window.location.origin}
+        onRedirectCallback={onRedirectCallback}
+    >
+        <App />
+    </Auth0Provider>,
+    document.getElementById("root") as HTMLElement
+);
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

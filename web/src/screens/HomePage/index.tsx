@@ -1,10 +1,15 @@
 import React from "react";
+import { Nav } from '../Nav';
 
 const HomePage: React.FC<{}> = (): JSX.Element => {
+  
   return (
-    <div>
-      Hello, I am a home page
+    <div className="App">
+      <header>
+        <Nav />
+      </header>
     </div>
   );
-}
+};
+
 export { HomePage };
