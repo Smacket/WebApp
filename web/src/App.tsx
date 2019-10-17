@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { HomePage, OrganizationPage, ProfilePage, TournamentPage } from "./screens";
+import { HomePage } from "./screens";
+import { useAuth0 } from "./react-auth0-wrapper";
 
 //const URL = "http://localhost:5000";
 
@@ -32,10 +33,25 @@ const App: React.FC = () => {
       .then((result) => console.log(result))
   }*/
 
+  const { loading, isAuthenticated, getTokenSilently } = useAuth0();
+
+  useEffect(() => {
+    if (loading || !isAuthenticated) {
+      return;
+    }
+
+    const setToken: () => void = async (): Promise<void> => {
+      const token: string = (await getTokenSilently()) || "";
+      localStorage.setItem("auth0_access_token", token);
+    };
+
+    setToken();
+  }, [loading, isAuthenticated, getTokenSilently]);
+
   return (
     <BrowserRouter>
       <Switch>
-        <Route exact={true} path="/" component={ProfilePage} />
+        <Route exact={true} path="/" component={HomePage} />
         {/*<Route component={NotFoundPage} />*/}
       </Switch>
     </BrowserRouter>
