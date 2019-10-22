@@ -1,3 +1,24 @@
+@font-face {
+  font-family: nexa;
+  src: url('./static/fonts/Nexa Light.otf')
+}
+
+@font-face {
+  font-family: nexa;
+  src: url('./static/fonts/Nexa Bold.otf');
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: roboto;
+  src: url('./static/fonts/Roboto-Regular.ttf')
+}
+
+body {
+  background: #1D1D1D;
+  color: white;
+}
+
 .App {
   text-align: center;
 }
