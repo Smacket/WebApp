@@ -100,7 +100,6 @@ const FontFix = styled.span`
 
 
 const HomePage: React.FC<{}> = (): JSX.Element => {
-  
   return (
     <Wrapper>
       <h1>
