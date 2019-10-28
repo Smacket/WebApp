@@ -9,8 +9,9 @@ ReactDOM.render(
     <Auth0Provider
         domain={'dmgardiner.auth0.com'}
         client_id={'nKvEjo2oZHU7sw8yNIE6ZuCzrAAXmydm'}
-        redirect_uri={window.location.origin}
+        redirect_uri={window.location.origin + '/callback'}
         onRedirectCallback={onRedirectCallback}
+        responseType={'token id_token'}
     >
         <App />
     </Auth0Provider>,
