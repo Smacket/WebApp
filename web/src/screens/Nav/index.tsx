@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import '../../App.css';
 
 const Wrapper = styled.div`
+  position: absolute;
   display: flex;
   align-items: center;
   justify-content: space-between;

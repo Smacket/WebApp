@@ -101,22 +101,25 @@ const FontFix = styled.span`
 
 const HomePage: React.FC<{}> = (): JSX.Element => {
   return (
-    <Wrapper>
-      <h1>
-        <FontFix>
-          Title
-        </FontFix>
-      </h1>
-      <h2>
-        <FontFix>
-          Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa sociis natoque. 
-        </FontFix>
-      </h2>
-      <Buttons>
-        <Matches><FontFix>VIEW MATCHES</FontFix></Matches>
-        <Tournaments><FontFix>VIEW TOURNAMENTS</FontFix></Tournaments>
-      </Buttons>
-    </Wrapper>
+    <div>
+      <Nav />
+      <Wrapper>
+        <h1>
+          <FontFix>
+            Title
+          </FontFix>
+        </h1>
+        <h2>
+          <FontFix>
+            Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa sociis natoque. 
+          </FontFix>
+        </h2>
+        <Buttons>
+          <Matches><FontFix>VIEW MATCHES</FontFix></Matches>
+          <Tournaments><FontFix>VIEW TOURNAMENTS</FontFix></Tournaments>
+        </Buttons>
+      </Wrapper>
+    </div>
   );
 };
 
