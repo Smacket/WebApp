@@ -1,42 +1,14 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { HomePage } from "./screens";
+import { HomePage, SignUpPage } from "./screens";
+import { Callback } from "./screens/Callback";
 import { useAuth0 } from "./react-auth0-wrapper";
 
-//const URL = "http://localhost:5000";
-
 const App: React.FC = () => {
-  /*useEffect(() => {
-    fetch(URL + "/getall")
-      .then(res => res.json())
-      .then(
-        (result) => {
-          console.log(result)
-        },
-        (error) => {
-          console.log(error)
-        }
-      );
-  })*/
-
-  /*const post = () => {
-    const data = {name: "Awesome Book 2", author: "David", published: "2020"}
-    fetch(URL + "/add", {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      method: "POST",
-      body: JSON.stringify(data)
-    })
-      .then(res => res.json())
-      .then((result) => console.log(result))
-  }*/
-
   const { loading, isAuthenticated, getTokenSilently } = useAuth0();
 
   useEffect(() => {
-    if (loading || !isAuthenticated) {
+    if (!isAuthenticated) {
       return;
     }
 
@@ -52,6 +24,8 @@ const App: React.FC = () => {
     <BrowserRouter>
       <Switch>
         <Route exact={true} path="/" component={HomePage} />
+        <Route exact={true} path="/signup" component={SignUpPage} />
+        <Route exact={true} path="/callback" component={Callback} />
         {/*<Route component={NotFoundPage} />*/}
       </Switch>
     </BrowserRouter>
