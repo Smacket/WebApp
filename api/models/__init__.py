@@ -1,3 +1,4 @@
 from .User import User
+from .Tournament import Tournament
 
-tables = [User]
+tables = [User, Tournament]
