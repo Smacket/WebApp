@@ -11,11 +11,13 @@ const Wrapper = styled.div`
 `;
 
 const PageConstraint = styled.div`
+  padding-top: 50px;
   width: 800px;
 `;
 
 const Header = styled.h1`
   margin-top: 50px;
+  margin-bottom: 5px;
   margin-bottom: 0;
   font-family: nexa;
   font-weight: normal;
