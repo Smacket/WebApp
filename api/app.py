@@ -11,14 +11,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-from models import User
+from models import User, Tournament
 
 @app.route("/")
 def hello():
   return "Hello World!"
 
+# User 
 @app.route("/add", methods=['POST'])
-def add_book():
+def add_user():
   data=request.get_json()
   try:
     user=User(
@@ -44,6 +45,32 @@ def get_by_email(email_):
   try:
     user=User.query.filter_by(email=email_).first()
     return jsonify(user.serialize())
+  except Exception as e:
+    return(str(e))
+
+# Tournament
+@app.route("/tournaments/create", methods=['POST'])
+def add_tournament():
+  data=request.get_json()
+  try:
+    tournament=Tournament(
+      name=data["name"],
+      location=data["location"],
+      date=data["date"],
+      description=data["description"],
+      players=data["players"]
+    )
+    db.session.add(tournament)
+    db.session.commit()
+    return "Tournament added. tournament id={}".format(user.id)
+  except Exception as e:
+    return(str(e))
+
+@app.route("/tournaments/getall", methods=["GET"])
+def get_all_tournaments():
+  try:
+    tournaments = Tournament.query.all()
+    return jsonify([e.serialize() for e in tournaments])
   except Exception as e:
     return(str(e))
 

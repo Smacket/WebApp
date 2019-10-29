@@ -26,8 +26,8 @@ const App: React.FC = () => {
         <Route exact={true} path="/" component={HomePage} />
         <Route exact={true} path="/signup" component={SignUpPage} />
         <Route exact={true} path="/callback" component={Callback} />
-        {/*<Route component={NotFoundPage} />*/}
         <Route exact={true} path="/create" component={TournamentForm} />
+        {/*<Route component={NotFoundPage} />*/}
       </Switch>
     </BrowserRouter>
   );
