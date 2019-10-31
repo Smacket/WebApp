@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Nav } from '../Nav';
 import styled from 'styled-components'
 import img from '../../static/img/Background.png'
+import { useAuth0 } from "../../react-auth0-wrapper";
+import { Link } from 'react-router-dom';
 import '../../App.css'
 
 const Wrapper = styled.div`
@@ -100,23 +102,31 @@ const FontFix = styled.span`
 
 
 const HomePage: React.FC<{}> = (): JSX.Element => {
+  const { isAuthenticated } = useAuth0();
+
+  useEffect(() => {
+    if(isAuthenticated) {
+      console.log('good');
+    }
+  })
+
   return (
     <div>
       <Nav />
       <Wrapper>
         <h1>
           <FontFix>
-            Title
+            Smacket
           </FontFix>
         </h1>
         <h2>
           <FontFix>
-            Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa sociis natoque. 
+            The home for Super Smash Bros. tournaments hosted by Missouri S&T's Fighting Game Club. 
           </FontFix>
         </h2>
         <Buttons>
-          <Matches><FontFix>VIEW MATCHES</FontFix></Matches>
-          <Tournaments><FontFix>VIEW TOURNAMENTS</FontFix></Tournaments>
+          {isAuthenticated && <Link to="/tournaments/create" style={{ textDecoration: 'none', color: 'inherit' }}><Matches><FontFix>CREATE TOURNAMENT</FontFix></Matches></Link>}
+          <Link to="/tournaments" style={{ textDecoration: 'none', color: 'white' }}><Tournaments><FontFix>VIEW TOURNAMENTS</FontFix></Tournaments></Link>
         </Buttons>
       </Wrapper>
     </div>

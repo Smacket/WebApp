@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Redirect } from "react-router-dom";
 import { Nav } from "../Nav";
 import styled from "styled-components";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import TimePicker from "rc-time-picker";
-import "rc-time-picker/assets/index.css";
+import TimePicker from "./TimePicker";
 import moment from "moment";
+import uuid from 'uuid';
 
 import { useAuth0 } from "../../react-auth0-wrapper";
 
@@ -109,41 +109,6 @@ const Time = styled.div`
   width: 100%;
 `;
 
-const StyledTimePicker = styled(TimePicker)`
-  & .rc-time-picker-panel-select-option-selected {
-    background-color: black;
-    color: pink;
-    font-weight: normal;
-  }
-
-  & .rc-time-picker-clear,
-  & .rc-time-picker-clear-icon:after {
-    display: none;
-  }
-
-  & .rc-time-picker-panel-select,
-  & .rc-time-picker-input,
-  & .rc-time-picker-panel-input {
-    font-family: Roboto;
-    font-size: 16px;
-    color: white;
-    height: 40px;
-    border: transparent;
-    border-radius: 3px;
-    background: #373737 !important;
-    width: 245px !important;
-
-    ::-webkit-scrollbar {
-      width: 0;
-      height: 0;
-    }
-  }
-
-  & .rc-time-picker-panel-inner {
-    background: black !important;
-  }
-`;
-
 const Start = styled.div`
   display: flex;
   flex-direction: column;
@@ -176,16 +141,28 @@ const Submit = styled.button`
   }
 `;
 
+interface UserTypes {
+  nickname: string;
+  name: string;
+  picture: string;
+  updated_at: string;
+  email: string;
+  email_verified: boolean;
+  sub: string;
+}
+
 const URL: string = "http://localhost:5000";
 
 const TournamentForm: React.FC<{}> = (): JSX.Element => {
-  const { isAuthenticated, user, loading } = useAuth0();
+  const { isAuthenticated, user } = useAuth0();
   const [name, setName] = useState<string>("");
   const [location, setLocation] = useState<string>("");
   const [startDate, setDate] = useState<Date>(new Date());
   const [startTime, setStartTime] = useState<any>(moment(new Date()));
   const [description, setDescription] = useState<string>("");
   const [players, setPlayers] = useState<string[]>([]);
+  const [submitted, setSubmitted] = useState(false);
+  const [_uuid, setUuid] = useState<string>('');
 
   const handleNameChange = (event: any) => {
     setName(event.target.value);
@@ -214,6 +191,7 @@ const TournamentForm: React.FC<{}> = (): JSX.Element => {
     var _players: string[] = [];
     event.target.value.split("\n").map((value: any) => {
       _players.push(value);
+      return _players;
     });
     setPlayers(_players);
   };
@@ -224,117 +202,116 @@ const TournamentForm: React.FC<{}> = (): JSX.Element => {
     console.log('posting');
 
     const post = () => {
-      const data = {
-        name: name,
-        location: location,
-        date: startTime.unix(),
-        description: description,
-        players: players
-      };
-      console.log(JSON.stringify(data))
-      fetch(URL + "/tournaments/create", {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json"
-        },
-        method: "POST",
-        body: JSON.stringify(data)
-      }).then(response => {
-        response.json().then(data =>{
-          console.log(data);
-        })
-      })
+      if (isAuthenticated) {
+        var profile: UserTypes = user;
+        var uuidv4: string = uuid.v4().toString();
+        setUuid(uuidv4)
+        fetch(URL + "/get/" + profile.email, {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json"
+          },
+          method: "GET",
+        }).then(response => {
+          response.json().then(data =>{
+            const newData = {
+              name: name,
+              location: location,
+              date: startTime.unix(),
+              description: description,
+              players: players,
+              organizer: data.username,
+              uuid: uuidv4
+            };
+            console.log(JSON.stringify(newData))
+            fetch(URL + "/tournaments/create", {
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+              },
+              method: "POST",
+              body: JSON.stringify(newData)
+            }).then(response => {
+                setSubmitted(true);
+            })
+          })
+        });
+      }
     };
 
     post();
   };
 
-  return (
-    <Wrapper>
-      <Nav />
-      <PageConstraint>
-        <Header>Create your tournament</Header>
-        <Form>
-          <InputWrapper>
-            <label>
-              Tournament Name <span className="required"> *</span>
-            </label>
-            <Input
-              type="text"
-              value={name}
-              name="name"
-              onChange={handleNameChange}
-            ></Input>
-            <label>
-              Location<span className="required"> *</span>
-            </label>
-            <Input
-              placeholder="Building and room #"
-              type="text"
-              value={location}
-              name="location"
-              onChange={handleLocationChange}
-            ></Input>
-            <label>
-              Start Date<span className="required"> *</span>
-            </label>
-            <DatePicker
-              className="date-picker"
-              selected={startDate}
-              onChange={handleDateChange}
-            />
-            <Time>
-              <Start>
-                <label>
-                  Start Time<span className="required"> *</span>
-                </label>
-                <StyledTimePicker
-                  showSecond={false}
-                  defaultValue={moment()
-                    .hour(0)
-                    .minute(0)}
-                  className="time-picker"
-                  onChange={handleTimeChange}
-                  format={"h:mm a"}
-                  use12Hours
-                  inputReadOnly
-                />
-              </Start>
-              <End>
-                <label>End time</label>
-                <StyledTimePicker
-                  showSecond={false}
-                  defaultValue={moment()
-                    .hour(0)
-                    .minute(0)}
-                  className="time-picker"
-                  onChange={handleTimeChange}
-                  format={"h:mm a"}
-                  use12Hours
-                  inputReadOnly
-                />
-              </End>
-            </Time>
-            <label>Tournament Description</label>
-            <textarea
-              name="description"
-              value={description}
-              onChange={handleDescChange}
-            ></textarea>
-            <label>Player Names</label>
-            <textarea
-              placeholder="Separate players by line"
-              name="players"
-              onChange={handlePlayerChange}
-            ></textarea>
-            <Submit type="submit" onClick={handleSubmit}>
-              <FontFix>SUBMIT</FontFix>
-            </Submit>
-          </InputWrapper>
-        </Form>
-      </PageConstraint>
-    </Wrapper>
-  );
+  if(submitted) {
+    return <Redirect to={"/tournaments/view/" + _uuid} />
+  } else {
+    return (
+      <Wrapper>
+        <Nav />
+        <PageConstraint>
+          <Header>Create your tournament</Header>
+          <Form>
+            <InputWrapper>
+              <label>
+                Tournament Name <span className="required"> *</span>
+              </label>
+              <Input
+                type="text"
+                value={name}
+                name="name"
+                onChange={handleNameChange}
+              ></Input>
+              <label>
+                Location<span className="required"> *</span>
+              </label>
+              <Input
+                placeholder="Building and room #"
+                type="text"
+                value={location}
+                name="location"
+                onChange={handleLocationChange}
+              ></Input>
+              <label>
+                Start Date<span className="required"> *</span>
+              </label>
+              <DatePicker
+                className="date-picker"
+                selected={startDate}
+                onChange={handleDateChange}
+              />
+              <Time>
+                <Start>
+                  <label>
+                    Start Time<span className="required"> *</span>
+                  </label>
+                  <TimePicker onChange={handleTimeChange} />
+                </Start>
+                <End>
+                  <label>End time</label>
+                  <TimePicker />
+                </End>
+              </Time>
+              <label>Tournament Description</label>
+              <textarea
+                name="description"
+                value={description}
+                onChange={handleDescChange}
+              ></textarea>
+              <label>Player Names</label>
+              <textarea
+                placeholder="Separate players by line"
+                name="players"
+                onChange={handlePlayerChange}
+              ></textarea>
+              <Submit type="submit" onClick={handleSubmit}>
+                <FontFix>SUBMIT</FontFix>
+              </Submit>
+            </InputWrapper>
+          </Form>
+        </PageConstraint>
+      </Wrapper>
+    );
+  }
 };
 
 export { TournamentForm };

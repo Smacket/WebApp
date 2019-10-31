@@ -129,18 +129,24 @@ const URL: string = "http://localhost:5000"
 const SignUpPage: React.FC<{}> = (): JSX.Element => {
   const { isAuthenticated, user } = useAuth0();
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   const handleNameChange = (event: any) => {
-    setName(event.target.name);
+    setName(event.target.value);
+  };
+
+  const handleUsernameChange = (event: any) => {
+    setUsername(event.target.value);
+    console.log(username);
   };
 
   const handleSubmit = (event: any) => {
     event.preventDefault();
 
     const post = () => {
-      const data = {name: name, email: email }
+      const data = {name: name, username: username, email: email }
       fetch(URL + "/add", {
         headers: {
           'Accept': 'application/json',
@@ -187,6 +193,10 @@ const SignUpPage: React.FC<{}> = (): JSX.Element => {
                   Name <span className='required'>*</span>
                 </label>
                 <Input type="text" name="name" onChange={handleNameChange}></Input>
+                <label>
+                  Username <span className='required'>*</span>
+                </label>
+                <Input type="text" name="username" onChange={handleUsernameChange}></Input>
                 <label>Email</label>
                 <Input type="text" value={profile.email} disabled></Input>
                 <ButtonGreen type="submit" onClick={handleSubmit}>

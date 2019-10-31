@@ -4,4 +4,5 @@ import { OrganizationPage } from "./OrganizationPage";
 import { ProfilePage } from "./ProfilePage";
 import { TournamentForm } from "./TournamentForm";
 import { SignUpPage } from './SignUpPage';
-export { HomePage, TournamentPage, OrganizationPage, ProfilePage, TournamentForm, SignUpPage };
+import { TournamentList } from './TournamentList';
+export { HomePage, TournamentPage, OrganizationPage, ProfilePage, TournamentForm, SignUpPage, TournamentList };

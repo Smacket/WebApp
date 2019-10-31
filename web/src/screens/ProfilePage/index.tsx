@@ -135,20 +135,20 @@ const ProfilePage: React.FC<{}> = (): JSX.Element => {
         </StatGroup>
       </Stats>
       <Info>
-        <img src={require('../../static/img/Location.png')}/>
+        <img src={require('../../static/img/Location.png')} alt="location"/>
         <h1>Rolla, Missouri, USA</h1>
-        <img src={require('../../static/img/Major.png')}/>
+        <img src={require('../../static/img/Major.png')} alt="major"/>
         <h1>Computer Science</h1>
-        <img src={require('../../static/img/Member.png')}/>
+        <img src={require('../../static/img/Member.png')} alt="member"/>
         <h1>Member for 1 year</h1>
       </Info>
       <Tournaments>
         <h1>PLAYED TOURNAMENTS</h1>
         <Line/>
         <Wins>
-          <img src={require('../../static/img/1st.png')}/>
-          <img src={require('../../static/img/2nd.png')}/>
-          <img src={require('../../static/img/3rd.png')}/>
+          <img src={require('../../static/img/1st.png')} alt="first"/>
+          <img src={require('../../static/img/2nd.png')} alt="second"/>
+          <img src={require('../../static/img/3rd.png')} alt="third"/>
         </Wins>
       </Tournaments>
     </Wrapper>

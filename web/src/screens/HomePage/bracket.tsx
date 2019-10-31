@@ -1,85 +1,209 @@
 import React, { useEffect, useState } from "react";
-import { Bracket, BracketGame, Model } from "react-tournament-bracket";
+import { Bracket, BracketGame } from "react-tournament-bracket";
 import JSOG from "jsog";
 import * as _ from "underscore";
+import styled from "styled-components";
+import { useAuth0 } from "../../react-auth0-wrapper";
 
-const HomePage: React.FC<{}> = (): JSX.Element => {
-  const teams = [
-    "team1",
-    "team2",
-    "team3",
-    "team4",
-    "team5",
-    "team6",
-    "team7",
-    "team8",
-    "team9",
-    "team10",
-    "team11",
-    "team12",
-    "team13",
-    "team14",
-    "team15",
-    "team16",
-    "team17",
-    "team18",
-    "team19",
-    "team20",
-    "team21",
-    "team22",
-    "team23",
-    "team24",
-    "team25",
-    "team26",
-    "team27",
-    "team28",
-    "team29",
-    "team30",
-    "team31",
-    "team32"
-  ];
-  const numTeams = 29;
-  const [hoveredTeamId, setHoveredTeamId] = useState<string>("");
+const Wrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-left: -50px;
+
+  path {
+    stroke: white !important;
+  }
+`;
+
+const Update = styled.div`
+  display: flex;
+  align-items: flex-end;
+  margin-top: 15px;
+  margin-left: 50px;
+  z-index: 2;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    width: 125px;
+    margin-right: 15px;
+  }
+
+  p {
+    margin: 0;
+  }
+`;
+
+const Input = styled.input`
+  border: transparent;
+  border-radius: 3px;
+  width: 100%;
+  height: 35px;
+  background: #373737;
+  color: white;
+  padding: 0 5px;
+`;
+
+const ButtonGreen = styled.button`
+  width: 100px;
+  height: 35px;
+  border: transparent;
+  border-radius: 3px;
+  background: #00813c;
+  color: white;
+  font-family: nexa;
+  font-weight: bold;
+
+  &:hover {
+    cursor: pointer;
+  }
+`;
+
+const FontFix = styled.span`
+  position: relative;
+  top: 0.1em;
+`;
+
+interface IProps {
+  players: string[];
+  tournamentId: string | undefined;
+}
+
+interface UserTypes {
+  nickname: string;
+  name: string;
+  picture: string;
+  updated_at: string;
+  email: string;
+  email_verified: boolean;
+  sub: string;
+}
+
+const URL: string = "http://localhost:5000";
+
+const Tournament: React.FC<IProps> = (props): JSX.Element => {
+  const { players, tournamentId } = props;
+  const { isAuthenticated, user } = useAuth0();
+  const numTeams = players.length;
   const [matches, setMatches] = useState<any[]>([]);
+  const [scoresSet, setScoresSet] = useState<boolean>(false);
+  const [update, setUpdate] = useState<boolean>(false);
+  const [idToUpdate, setIdToUpdate] = useState<string>("");
+  const [score1Update, setScore1Update] = useState<number>(-1);
+  const [score2Update, setScore2Update] = useState<number>(-1);
+  const [currentUser, setCurrentUser] = useState<string>("");
+  const [organizer, setOrganizer] = useState<string>("");
+  var matchScores: any = [];
+  var test: boolean = false;
+
+  const handleMatchIdChange = (event: any) => {
+    setIdToUpdate(event.target.value);
+  };
+
+  const handleScore1Change = (event: any) => {
+    setScore1Update(event.target.value);
+  };
+
+  const handleScore2Change = (event: any) => {
+    setScore2Update(event.target.value);
+  };
+
+  const handleUpdate = () => {
+    const data = {
+      score1: score1Update,
+      score2: score2Update
+    };
+    fetch(
+      URL + "/tournaments/update_score/" + tournamentId + "/" + idToUpdate,
+      {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        method: "POST",
+        body: JSON.stringify(data)
+      }
+    )
+      .then(response => {
+        setUpdate(true);
+      })
+      .then(error => {
+        //console.log(error);
+      });
+  };
 
   useEffect(() => {
     var numLevels: number = Math.log2(
       Math.pow(2, Math.ceil(Math.log2(numTeams)))
     );
 
-    if (matches.length === 0) {
-      var numByes =
-        numTeams - Math.pow(2, Math.round(Math.log(numTeams) / Math.log(2)));
+    if (currentUser === "" && isAuthenticated) {
+      var profile: UserTypes = user;
 
-      var byeTeams: any[] = [];
-      var otherTeams: any[] = teams.slice(0, numTeams).slice(Math.abs(numByes));
+      fetch(URL + "/get/" + profile.email)
+        .then(res => res.json())
+        .then(result => {
+          setCurrentUser(result.username);
+        });
+    }
 
-      if (numByes !== 0) {
-        byeTeams = calculateByes(numByes);
-      }
+    if (organizer === "") {
+      fetch(URL + "/tournaments/get/" + tournamentId)
+        .then(res => res.json())
+        .then(result => {
+          setOrganizer(result.organizer);
+        });
+    }
 
-      generateBracket(numLevels, byeTeams, otherTeams);
+    if ((matchScores.length === 0 || update) && organizer !== "") {
+      fetch(URL + "/tournaments/" + tournamentId)
+        .then(res => res.json())
+        .then(
+          result => {
+            matchScores = result.sort((a: any, b: any) =>
+              a.matchId > b.matchId ? 1 : -1
+            );
+
+            if (matches.length === 0 || update) {
+              var numByes =
+                numTeams -
+                Math.pow(2, Math.round(Math.log(numTeams) / Math.log(2)));
+
+              var byeTeams: any[] = [];
+              var otherTeams: any[] = players
+                .slice(0, numTeams)
+                .slice(Math.abs(numByes));
+
+              if (numByes !== 0) {
+                byeTeams = calculateByes(numByes);
+              }
+
+              generateBracket(numLevels, byeTeams, otherTeams);
+              setUpdate(false);
+            }
+          },
+          error => {
+            //console.log(error);
+          }
+        );
     }
   });
 
   const calculateByes = (numByes: number) => {
-    var byeTeams = teams.slice(0, Math.abs(numByes));
-    var numByesLevels: number = Math.pow(2, Math.ceil(Math.log(Math.abs(numByes)) / Math.log(2)))
-    var numByes1: number = Math.floor(Math.abs(numByes) / 2)
-    var numByes2: number = Math.ceil(Math.abs(numByes) / 2)
-    var a: number[] = []
-    var b: number[] = []
-    console.log(numByes1)
-    console.log(numByes2)
-    console.log(numByesLevels)
-    
-    for(var i = 0; i < numByesLevels; i++) {
-      
-    }
+    var byeTeams = players.slice(0, Math.abs(numByes));
+    var numByesLevels: number = Math.pow(
+      2,
+      Math.ceil(Math.log(Math.abs(numByes)) / Math.log(2))
+    );
+    var numByes1: number = Math.floor(Math.abs(numByes) / 2);
+    var numByes2: number = Math.ceil(Math.abs(numByes) / 2);
+    var a: number[] = [];
+    var b: number[] = [];
 
+    for (var i = 0; i < numByesLevels; i++) {}
 
-    return byeTeams
-  }
+    return byeTeams;
+  };
 
   const generateBracket = (
     numLevels: number,
@@ -90,8 +214,95 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
     var previousMatches: number = 0;
     var match: any = {};
     var matchId: number = byeTeams.length + otherTeams.length - 1;
+
     for (var i = numLevels - 1; i >= 0; i--) {
       if (i === numLevels - 1 && i !== 1 && i !== 0) {
+        var player1 = "";
+        var player2 = "";
+        var score1 = null;
+        var score2 = null;
+        var update = false;
+        if (matchScores.length !== 0) {
+          player1 = matchScores[matchId - 1].player1;
+          player2 = matchScores[matchId - 1].player2;
+          score1 = matchScores[matchId - 1].score1;
+          score2 = matchScores[matchId - 1].score2;
+
+          if (player1 === "") {
+            if (
+              matchScores[matchId - 3].score1 > matchScores[matchId - 3].score2
+            ) {
+              player1 = matchScores[matchId - 3].player1;
+              update = true;
+            } else if (
+              matchScores[matchId - 3].score1 < matchScores[matchId - 3].score2
+            ) {
+              player1 = matchScores[matchId - 3].player2;
+              update = true;
+            }
+          }
+
+          if (player2 === "") {
+            if (
+              matchScores[matchId - 2].score1 > matchScores[matchId - 2].score2
+            ) {
+              player2 = matchScores[matchId - 2].player1;
+              update = true;
+            } else if (
+              matchScores[matchId - 2].score1 < matchScores[matchId - 2].score2
+            ) {
+              player2 = matchScores[matchId - 2].player2;
+              update = true;
+            }
+          }
+
+          if (update) {
+            const data = {
+              player1: player1,
+              player2: player2,
+              score1: score1,
+              score2: score2
+            };
+            fetch(URL + "/tournaments/update/" + tournamentId + "/" + matchId, {
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+              },
+              method: "POST",
+              body: JSON.stringify(data)
+            })
+              .then(response => {
+                setScoresSet(scoresSet => true)
+                //console.log(response);
+              })
+              .then(error => {
+                //console.log(error);
+              });
+          }
+        } else if (!scoresSet) {
+          const data = {
+            player1: "",
+            player2: "",
+            score1: -1,
+            score2: -1,
+            matchId: matchId,
+            tournamentUUID: tournamentId
+          };
+          setScoresSet(scoresSet => true);
+          fetch(URL + "/tournaments/create_match", {
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json"
+            },
+            method: "POST",
+            body: JSON.stringify(data)
+          })
+            .then(response => {
+            })
+            .then(error => {
+              //console.log(error);
+            });
+        }
         match = {
           id: matchId,
           "@id": matchId,
@@ -100,10 +311,10 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
           sides: {
             home: {
               score: {
-                score: null
+                score: score1 === -1 ? null : score1
               },
               team: {
-                name: ""
+                name: player1
               },
               seed: {
                 sourceGame: { "@ref": matchId - 2 },
@@ -114,10 +325,10 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
             },
             visitor: {
               score: {
-                score: null
+                score: score2 === -1 ? null : score2
               },
               team: {
-                name: ""
+                name: player2
               },
               seed: {
                 sourceGame: { "@ref": matchId - 1 },
@@ -136,6 +347,104 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
         var newMatches2: any[] = [];
         matchId -= previousMatches * 2;
         for (var j = 0; j < previousMatches * 2; j++) {
+          var player1 = "";
+          var player2 = "";
+          var score1 = null;
+          var score2 = null;
+          var update = false;
+          if (matchScores.length !== 0) {
+            player1 = matchScores[matchId - 1].player1;
+            player2 = matchScores[matchId - 1].player2;
+            score1 = matchScores[matchId - 1].score1;
+            score2 = matchScores[matchId - 1].score2;
+
+            if (player1 === "") {
+              if (
+                matchScores[matchId - previousMatches * 2 * 2 + j - 1].score1 >
+                matchScores[matchId - previousMatches * 2 * 2 + j - 1].score2
+              ) {
+                player1 =
+                  matchScores[matchId - previousMatches * 2 * 2 + j - 1]
+                    .player1;
+                update = true;
+              } else if (
+                matchScores[matchId - previousMatches * 2 * 2 + j - 1].score1 <
+                matchScores[matchId - previousMatches * 2 * 2 + j - 1].score2
+              ) {
+                player1 =
+                  matchScores[matchId - previousMatches * 2 * 2 + j - 1]
+                    .player2;
+                update = true;
+              }
+            }
+
+            if (player2 === "") {
+              if (
+                matchScores[matchId - previousMatches * 2 * 2 + j].score1 >
+                matchScores[matchId - previousMatches * 2 * 2 + j].score2
+              ) {
+                player2 =
+                  matchScores[matchId - previousMatches * 2 * 2 + j].player1;
+                update = true;
+              } else if (
+                matchScores[matchId - previousMatches * 2 * 2 + j].score1 <
+                matchScores[matchId - previousMatches * 2 * 2 + j].score2
+              ) {
+                player2 =
+                  matchScores[matchId - previousMatches * 2 * 2 + j].player2;
+                update = true;
+              }
+            }
+
+            if (update) {
+              const data = {
+                player1: player1,
+                player2: player2,
+                score1: score1,
+                score2: score2
+              };
+              fetch(
+                URL + "/tournaments/update/" + tournamentId + "/" + matchId,
+                {
+                  headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json"
+                  },
+                  method: "POST",
+                  body: JSON.stringify(data)
+                }
+              )
+                .then(response => {
+                  //console.log(response);
+                })
+                .then(error => {
+                  //console.log(error);
+                });
+            }
+          } else if (!scoresSet) {
+            const data = {
+              player1: "",
+              player2: "",
+              score1: -1,
+              score2: -1,
+              matchId: matchId,
+              tournamentUUID: tournamentId
+            };
+            fetch(URL + "/tournaments/create_match", {
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+              },
+              method: "POST",
+              body: JSON.stringify(data)
+            })
+              .then(response => {
+                setScoresSet(true);
+              })
+              .then(error => {
+                //console.log(error);
+              });
+          }
           match = {
             id: matchId,
             "@id": matchId,
@@ -144,10 +453,10 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
             sides: {
               home: {
                 score: {
-                  score: null
+                  score: score1 === -1 ? null : score1
                 },
                 team: {
-                  name: ""
+                  name: player1
                 },
                 seed: {
                   sourceGame: { "@ref": matchId - previousMatches * 2 * 2 + j },
@@ -158,10 +467,10 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
               },
               visitor: {
                 score: {
-                  score: null
+                  score: score2 === -1 ? null : score2
                 },
                 team: {
-                  name: ""
+                  name: player2
                 },
                 seed: {
                   sourceGame: {
@@ -196,7 +505,128 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
           j < (previousMatches === 0 ? 1 : previousMatches * 2);
           j++
         ) {
-          if (byeTeams.length !== previousMatches*2 && j === 1 || byeTeams.length === 0) {
+          var player1 = "";
+          var player2 = "";
+          var score1 = null;
+          var score2 = null;
+          var update = false;
+          if (matchScores.length !== 0) {
+            player1 = matchScores[matchId - 1].player1;
+            player2 = matchScores[matchId - 1].player2;
+            score1 = matchScores[matchId - 1].score1;
+            score2 = matchScores[matchId - 1].score2;
+
+            if (
+              (byeTeams.length === previousMatches * 2 || j !== 1) &&
+              byeTeams.length !== 0
+            ) {
+              if (player1 !== byeTeams[byeCount]) {
+                player1 = byeTeams[byeCount];
+                update = true;
+              }
+
+              if (player2 === "") {
+                if (
+                  matchScores[otherCount - 1].score1 >
+                  matchScores[otherCount - 1].score2
+                ) {
+                  player2 = matchScores[otherCount - 1].player1;
+                  update = true;
+                } else if (
+                  matchScores[otherCount - 1].score1 <
+                  matchScores[otherCount - 1].score2
+                ) {
+                  player2 = matchScores[otherCount - 1].player2;
+                  update = true;
+                }
+              }
+            } else {
+              if (player1 === "") {
+                if (
+                  matchScores[otherCount - 1].score1 >
+                  matchScores[otherCount - 1].score2
+                ) {
+                  player1 = matchScores[otherCount - 1].player1;
+                  update = true;
+                } else if (
+                  matchScores[otherCount - 1].score1 <
+                  matchScores[otherCount - 1].score2
+                ) {
+                  player1 = matchScores[otherCount - 1].player2;
+                  update = true;
+                }
+              }
+
+              if (player2 === "") {
+                if (
+                  matchScores[otherCount].score1 >
+                  matchScores[otherCount].score2
+                ) {
+                  player2 = matchScores[otherCount].player1;
+                  update = true;
+                } else if (
+                  matchScores[otherCount].score1 <
+                  matchScores[otherCount].score2
+                ) {
+                  player2 = matchScores[otherCount].player2;
+                  update = true;
+                }
+              }
+            }
+
+            if (update) {
+              const data = {
+                player1: player1,
+                player2: player2,
+                score1: score1,
+                score2: score2
+              };
+              fetch(
+                URL + "/tournaments/update/" + tournamentId + "/" + matchId,
+                {
+                  headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json"
+                  },
+                  method: "POST",
+                  body: JSON.stringify(data)
+                }
+              )
+                .then(response => {
+                  //console.log(response);
+                })
+                .then(error => {
+                  //console.log(error);
+                });
+            }
+          } else if (!scoresSet) {
+            const data = {
+              player1: "",
+              player2: "",
+              score1: -1,
+              score2: -1,
+              matchId: matchId,
+              tournamentUUID: tournamentId
+            };
+            fetch(URL + "/tournaments/create_match", {
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+              },
+              method: "POST",
+              body: JSON.stringify(data)
+            })
+              .then(response => {
+                //console.log(response);
+              })
+              .then(error => {
+                //console.log(error);
+              });
+          }
+          if (
+            (byeTeams.length !== previousMatches * 2 && j === 1) ||
+            byeTeams.length === 0
+          ) {
             match = {
               id: matchId,
               "@id": matchId,
@@ -205,30 +635,30 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
               sides: {
                 home: {
                   score: {
-                    score: null
+                    score: score1 === -1 ? null : score1
                   },
                   team: {
-                    name: ""
+                    name: player1
                   },
                   seed: {
-                    sourceGame: { "@ref": otherCount++ },
+                    sourceGame: { "@ref": otherCount },
                     sourcePool: null,
                     rank: 1,
-                    displayName: "Winner of B4"
+                    displayName: "Winner of " + otherCount++
                   }
                 },
                 visitor: {
                   score: {
-                    score: null
+                    score: score2 === -1 ? null : score2
                   },
                   team: {
-                    name: ""
+                    name: player2
                   },
                   seed: {
-                    sourceGame: { "@ref": otherCount++ },
+                    sourceGame: { "@ref": otherCount },
                     sourcePool: null,
                     rank: 1,
-                    displayName: "Winner of B4"
+                    displayName: "Winner of " + otherCount++
                   }
                 }
               }
@@ -242,7 +672,7 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
               sides: {
                 home: {
                   score: {
-                    score: null
+                    score: score1 === -1 ? null : score1
                   },
                   team: {
                     name: byeTeams[byeCount++]
@@ -250,10 +680,10 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
                 },
                 visitor: {
                   score: {
-                    score: null
+                    score: score2 === -1 ? null : score2
                   },
                   team: {
-                    name: ""
+                    name: player2
                   },
                   seed: {
                     sourceGame: { "@ref": otherCount++ },
@@ -271,7 +701,38 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
         matchId -= previousMatches * 2;
       } else {
         matchId = 1;
+
         for (var j = 0; j < otherTeams.length; j += 2) {
+          var score1 = null;
+          var score2 = null;
+          if (matchScores.length !== 0) {
+            score1 = matchScores[matchId - 1].score1;
+            score2 = matchScores[matchId - 1].score2;
+          } else if (!scoresSet) {
+            const data = {
+              player1: otherTeams[j],
+              player2: otherTeams[j + 1],
+              score1: -1,
+              score2: -1,
+              matchId: matchId,
+              tournamentUUID: tournamentId
+            };
+            fetch(URL + "/tournaments/create_match", {
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+              },
+              method: "POST",
+              body: JSON.stringify(data)
+            })
+              .then(response => {
+                //console.log(response);
+              })
+              .then(error => {
+                //console.log(error);
+              });
+          }
+
           match = {
             id: matchId,
             "@id": matchId,
@@ -280,7 +741,7 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
             sides: {
               home: {
                 score: {
-                  score: null
+                  score: score1 === -1 ? null : score1
                 },
                 team: {
                   name: otherTeams[j]
@@ -288,7 +749,7 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
               },
               visitor: {
                 score: {
-                  score: null
+                  score: score2 === -1 ? null : score2
                 },
                 team: {
                   name: otherTeams[j + 1]
@@ -301,279 +762,77 @@ const HomePage: React.FC<{}> = (): JSX.Element => {
         }
       }
     }
-    //console.log(JSOG.decode(matches.reverse()))
     setMatches(matches.reverse());
   };
-
-  /*if (matches.length === 0) {
-      var numByes =
-        teams.length -
-        Math.pow(2, Math.round(Math.log(teams.length) / Math.log(2)));
-      console.log(numByes)
-      var newMatches: any = [];
-      if (numByes) {
-        var byeTeams: any[] = teams.slice(0, Math.abs(numByes));
-        var otherTeams: any[] = teams.slice(Math.abs(numByes));
-        for (var i = 0; i < Math.abs(numByes); i++) {
-          var match = {
-            id: i,
-            "@id": i,
-            name: "Match " + i,
-            sides: {
-              home: {
-                score: {
-                  score: 1
-                },
-                team: {
-                  name: otherTeams[i*2]
-                }
-              },
-              visitor: {
-                score: {
-                  score: 1
-                },
-                team: {
-                  name: otherTeams[i*2 + 1]
-                }
-              }
-            }
-          };
-          newMatches.push(match);
-          console.log(match)
-        }
-        newMatches.push(
-          ...generateBracket(newMatches, numByes, byeTeams, otherTeams)
-        );
-      } else {
-        for (var i = 0; i < teams.length; i += 2) {
-          var match3 = {
-            id: i / 2,
-            "@id": i / 2,
-            name: "Match " + i / 2,
-            sides: {
-              home: {
-                score: {
-                  score: 1
-                },
-                team: {
-                  name: teams[i]
-                }
-              },
-              visitor: {
-                score: {
-                  score: 1
-                },
-                team: {
-                  name: teams[i + 1]
-                }
-              }
-            }
-          };
-          newMatches.push(match3);
-        }
-        newMatches.push(...generateBracket(newMatches));
-      }
-      setMatches(newMatches);
-      console.log(matches);
-    }*/
-
-  /*const generateBracket = (
-    matches: any,
-    numByes?: number,
-    byeTeams?: any[],
-    otherTeams?: any[]
-  ): any[] => {
-    if (matches.length === 1 && !numByes) {
-      return [];
-    }
-    var newMatches = [];
-    if (numByes && byeTeams && otherTeams) {
-      var matchId: number = matches.length
-      for (var i = 0; i < byeTeams.length; i++) {
-        var final = {
-          id: matchId,
-          "@id": matchId,
-          name: "Match " + matchId,
-          sides: {
-            home: {
-              score: {
-                score: 1
-              },
-              team: {
-                name: byeTeams[i]
-              }
-            },
-            visitor: {
-              score: {
-                score: 1
-              },
-              team: {
-                name: ""
-              },
-              seed: {
-                sourceGame: { "@ref": matches[i].id },
-                sourcePool: null,
-                rank: 1,
-                displayName: "Winner of B4"
-              }
-            }
-          }
-        };
-        newMatches.push(final);
-        console.log(final)
-        matchId++;
-      }
-      if (numByes < 0) {
-        for (var i = 0; i < matches.length-2; i++) {
-          var final2 = {
-            id: matchId,
-            "@id": matchId,
-            name: "Match " + matchId,
-            sides: {
-              home: {
-                score: {
-                  score: 1
-                },
-                team: {
-                  name: otherTeams[i]
-                },
-                seed: {
-                  sourceGame: { "@ref": matches[i].id },
-                  sourcePool: null,
-                  rank: 1,
-                  displayName: "Winner of B4"
-                }
-              },
-              visitor: {
-                score: {
-                  score: 1
-                },
-                team: {
-                  name: otherTeams[i + 1]
-                },
-                seed: {
-                  sourceGame: { "@ref": matches[i].id },
-                  sourcePool: null,
-                  rank: 1,
-                  displayName: "Winner of B4"
-                }
-              },
-            }
-          };
-          newMatches.push(final2);
-          console.log(final2)
-          matchId++;
-        }  
-      } else {
-        for (var i = 2; i < otherTeams.length; i += 2) {
-          var final3 = {
-            id: matchId,
-            "@id": matchId,
-            name: "Match " + matchId,
-            sides: {
-              home: {
-                score: {
-                  score: 1
-                },
-                team: {
-                  name: otherTeams[i]
-                }
-              },
-              visitor: {
-                score: {
-                  score: 1
-                },
-                team: {
-                  name: otherTeams[i + 1]
-                }
-              }
-            }
-          };
-          newMatches.push(final3);
-          matchId++;
-        }
-        console.log(newMatches);
-      }
-    } else {
-      var matchId: number = matches[matches.length - 1].id + 1;
-      for (var i = 0; i < matches.length; i += 2) {
-        //console.log(matches[i].id);
-        //console.log(matches[i + 1].id);
-        var final4: any = {
-          id: matchId,
-          "@id": matchId,
-          name: "Match " + matchId,
-          sides: {
-            home: {
-              score: {
-                score: 1
-              },
-              team: {
-                name: teams[0]
-              },
-              seed: {
-                sourceGame: { "@ref": matches[i].id },
-                sourcePool: null,
-                rank: 1,
-                displayName: "Winner of B4"
-              }
-            },
-            visitor: {
-              score: {
-                score: 1
-              },
-              team: {
-                name: teams[2]
-              },
-              seed: {
-                sourceGame: { "@ref": matches[i].id + 1 },
-                sourcePool: null,
-                rank: 1,
-                displayName: "Winner of B4"
-              }
-            }
-          }
-        };
-        newMatches.push(final4);
-        matchId++;
-      }
-    }
-    newMatches.push(...generateBracket(newMatches));
-    return newMatches;
-  };*/
-
-  const changeHoveredTeamId = (hoveredTeamId: string) => {
-    setHoveredTeamId(hoveredTeamId);
-  };
-
-  const handleClick = (game: Model.Game) => alert("clicked game: " + game.name);
 
   const GameComponent = (props: any) => {
     return (
       <BracketGame
         {...props}
-        onHoveredTeamIdChange={changeHoveredTeamId}
-        onClick={handleClick}
-        hoveredTeamId={hoveredTeamId}
+        styles={{
+          backgroundColor: "#000",
+          hoverBackgroundColor: "#222",
+          scoreBackground: "#787a80",
+          winningScoreBackground: "#00813C",
+          teamNameStyle: {
+            fill: "#fff",
+            fontSize: 12,
+            textShadow: "1px 1px 1px #222"
+          },
+          teamScoreStyle: { fill: "#23252d", fontSize: 12 },
+          gameNameStyle: { fill: "#999", fontSize: 10 },
+          gameTimeStyle: { fill: "#999", fontSize: 10 },
+          teamSeparatorStyle: { stroke: "#444549", strokeWidth: 1 }
+        }}
       />
     );
   };
 
   if (matches.length) {
     return (
-      <div>
-        <Bracket
-          GameComponent={GameComponent}
-          game={_.findWhere(JSOG.decode(matches), {
-            id: matches[matches.length - 1].id
-          })}
-          homeOnTop={true}
-        />
-      </div>
+      <Wrapper>
+        {currentUser === organizer && (
+          <Update>
+            <div>
+              <p>Match #</p>
+              <Input type="text" onChange={handleMatchIdChange}></Input>
+            </div>
+            <div>
+              <p>Player 1 Score</p>
+              <Input type="text" onChange={handleScore1Change}></Input>
+            </div>
+            <div>
+              <p>Player 2 Score</p>
+              <Input type="text" onChange={handleScore2Change}></Input>
+            </div>
+            <ButtonGreen onClick={handleUpdate}>
+              <FontFix>UPDATE</FontFix>
+            </ButtonGreen>
+          </Update>
+        )}
+        <div
+          style={{
+            marginTop:
+              numTeams -
+                Math.pow(2, Math.round(Math.log(numTeams) / Math.log(2))) !==
+              0
+                ? "-40px"
+                : "0"
+          }}
+        >
+          <Bracket
+            GameComponent={GameComponent}
+            game={_.findWhere(JSOG.decode(matches), {
+              id: matches[matches.length - 1].id
+            })}
+            homeOnTop={true}
+          />
+        </div>
+      </Wrapper>
     );
   } else {
     return <div></div>;
   }
 };
 
-export { HomePage };
+export { Tournament };

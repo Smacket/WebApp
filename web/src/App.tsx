@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { HomePage, SignUpPage, TournamentForm, ProfilePage } from "./screens";
+import { HomePage, SignUpPage, TournamentForm, TournamentPage, TournamentList, ProfilePage } from "./screens";
 import { Callback } from "./screens/Callback";
 import { useAuth0 } from "./react-auth0-wrapper";
 
@@ -26,7 +26,9 @@ const App: React.FC = () => {
         <Route exact={true} path="/" component={HomePage} />
         <Route exact={true} path="/signup" component={SignUpPage} />
         <Route exact={true} path="/callback" component={Callback} />
-        <Route exact={true} path="/create" component={TournamentForm} />
+        <Route exact={true} path="/tournaments" component={TournamentList} />
+        <Route exact={true} path="/tournaments/create" component={TournamentForm} />
+        <Route exact={true} path="/tournaments/view/:tournament_id" component={TournamentPage} />
         <Route exact={true} path="/profile" component={ProfilePage} />
         {/*<Route component={NotFoundPage} />*/}
       </Switch>
