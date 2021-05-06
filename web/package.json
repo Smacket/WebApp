@@ -25,7 +25,7 @@
     "react-tournament-bracket": "^0.2.4",
     "styled-components": "^4.3.2",
     "typescript": "3.6.3",
-    "underscore": "^1.9.1",
+    "underscore": "^1.12.1",
     "uuid": "^3.3.3"
   },
   "scripts": {
